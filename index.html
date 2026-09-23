@@ -1,258 +1,306 @@
-```html
 <!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <meta name="theme-color" content="#07111f">
+<meta name="description"
+      content="AI SKY CLOUDS — videodagi osmonni AI yordamida aniqlab, bulut effektlarini qo‘shuvchi dastur">
 
-<title>AI Sky Replacer</title>
+<title>☁️ AI SKY CLOUDS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/deeplab@0.2.2/dist/deeplab.min.js"></script>
 
 <style>
 *{
     box-sizing:border-box;
     margin:0;
     padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+:root{
+    --bg:#07111f;
+    --card:#0e1b2d;
+    --card2:#14253b;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --blue:#38bdf8;
+    --blue2:#2563eb;
+    --border:rgba(255,255,255,.1);
+    --danger:#ef4444;
+    --success:#22c55e;
 }
 
 body{
-    font-family:Arial,sans-serif;
-    background:
-        radial-gradient(circle at top,#183d63,#07111f 65%);
-    color:#fff;
     min-height:100vh;
-    padding:12px;
+    background:
+        radial-gradient(circle at top,#12365b 0,#07111f 45%,#030712 100%);
+    color:var(--text);
+    font-family:Arial,Helvetica,sans-serif;
 }
 
 .app{
+    width:100%;
     max-width:900px;
     margin:auto;
+    padding:18px;
 }
 
 header{
     text-align:center;
-    padding:20px 8px;
+    padding:15px 0 20px;
 }
 
-header h1{
-    font-size:29px;
-    margin-bottom:8px;
+.logo{
+    font-size:48px;
 }
 
-header p{
-    color:#a9bfd5;
-    line-height:1.5;
+h1{
+    font-size:30px;
+    margin-top:4px;
+}
+
+.subtitle{
+    color:var(--muted);
+    margin-top:8px;
+    font-size:14px;
 }
 
 .card{
-    background:rgba(12,25,42,.94);
-    border:1px solid #294765;
-    border-radius:20px;
-    padding:15px;
-    margin-bottom:14px;
-    box-shadow:0 15px 45px #0005;
+    background:rgba(14,27,45,.92);
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 15px 50px rgba(0,0,0,.25);
 }
 
-h2{
-    font-size:19px;
-    margin-bottom:13px;
-}
-
-.buttons{
+.status{
     display:flex;
-    flex-wrap:wrap;
-    gap:9px;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:rgba(56,189,248,.08);
+    border:1px solid rgba(56,189,248,.18);
+    color:#dbeafe;
+    margin-bottom:14px;
 }
 
-button,
-.file{
-    border:0;
-    border-radius:13px;
-    padding:14px 17px;
-    background:#2563eb;
-    color:white;
-    font-size:15px;
-    font-weight:bold;
-    cursor:pointer;
+.dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#f59e0b;
+    flex:none;
 }
 
-button:disabled{
-    opacity:.45;
+.dot.ok{
+    background:var(--success);
+    box-shadow:0 0 12px rgba(34,197,94,.8);
 }
 
-.green{
-    background:#16a34a;
+.dot.err{
+    background:var(--danger);
 }
 
-.red{
-    background:#dc2626;
-}
-
-.gray{
-    background:#334155;
-}
-
-.file{
-    display:inline-block;
+.file-btn{
+    display:block;
+    width:100%;
+    padding:17px;
+    border-radius:16px;
     text-align:center;
+    font-weight:bold;
+    background:linear-gradient(135deg,var(--blue),var(--blue2));
+    cursor:pointer;
+    color:white;
+    margin-bottom:12px;
 }
 
 input[type=file]{
     display:none;
 }
 
-.status{
-    margin-top:12px;
-    background:#081521;
-    color:#9ed3ff;
-    border-radius:12px;
-    padding:12px;
-    line-height:1.5;
-    font-size:14px;
-}
-
-.progressBox{
-    display:none;
-    margin-top:12px;
-}
-
-.progress{
-    width:100%;
-    height:12px;
-    background:#17283b;
-    border-radius:20px;
-    overflow:hidden;
-}
-
-.progressBar{
-    height:100%;
-    width:0%;
-    background:#3b82f6;
-    transition:.2s;
-}
-
-.progressText{
-    display:block;
-    margin-top:7px;
-    text-align:center;
-    color:#a9bfd5;
-    font-size:13px;
-}
-
-.preview{
-    position:relative;
-    overflow:hidden;
-    border-radius:16px;
-    background:#000;
-}
-
-video{
-    display:block;
-    width:100%;
-    max-height:65vh;
-    background:#000;
-}
-
+video,
 canvas{
+    width:100%;
+    display:block;
+    border-radius:17px;
+    background:#000;
+}
+
+#sourceVideo{
+    max-height:500px;
+}
+
+#processCanvas{
     display:none;
 }
 
-.result{
-    display:none;
+.info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
     margin-top:12px;
 }
 
-.download{
-    display:none;
-    margin-top:12px;
-    background:#16a34a;
-    color:white;
-    text-decoration:none;
-    text-align:center;
-    padding:14px;
+.infoBox{
+    background:var(--card2);
     border-radius:13px;
-    font-weight:bold;
+    padding:11px 6px;
+    text-align:center;
+}
+
+.infoBox b{
+    display:block;
+    font-size:17px;
+}
+
+.infoBox span{
+    display:block;
+    color:var(--muted);
+    font-size:11px;
+    margin-top:3px;
+}
+
+.controls{
+    display:grid;
+    gap:14px;
 }
 
 .control{
-    margin-bottom:17px;
+    background:var(--card2);
+    border-radius:15px;
+    padding:13px;
 }
 
 .controlTop{
     display:flex;
     justify-content:space-between;
     margin-bottom:8px;
+    font-size:14px;
 }
 
-.controlTop span:first-child{
-    font-weight:bold;
-}
-
-.value{
-    color:#60a5fa;
+.controlTop span{
+    color:var(--blue);
     font-weight:bold;
 }
 
 input[type=range]{
     width:100%;
-    accent-color:#3b82f6;
 }
 
 select{
     width:100%;
     padding:13px;
+    border:0;
     border-radius:12px;
-    background:#14263c;
+    background:#07111f;
     color:white;
-    border:1px solid #36516f;
     font-size:15px;
 }
 
-.info{
-    color:#9fb3c8;
-    font-size:13px;
-    line-height:1.6;
+button{
+    width:100%;
+    border:0;
+    border-radius:16px;
+    padding:16px;
+    font-size:16px;
+    font-weight:bold;
+    color:white;
+    cursor:pointer;
 }
 
-.ai{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:#071927;
-    border:1px solid #1f4262;
-    padding:12px;
-    border-radius:13px;
-    margin-bottom:12px;
+#processBtn{
+    background:linear-gradient(135deg,#22c55e,#15803d);
 }
 
-.aiDot{
-    width:12px;
+#stopBtn{
+    background:linear-gradient(135deg,#ef4444,#991b1b);
+    margin-top:9px;
+}
+
+button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+.progressWrap{
+    display:none;
+    margin-top:15px;
+}
+
+.progress{
     height:12px;
-    background:#22c55e;
-    border-radius:50%;
-    box-shadow:0 0 15px #22c55e;
+    background:#020617;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progressBar{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,#38bdf8,#2563eb);
+    transition:width .15s linear;
+}
+
+.progressText{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    margin-top:7px;
+}
+
+#resultCard{
+    display:none;
+}
+
+.download{
+    display:block;
+    text-align:center;
+    text-decoration:none;
+    background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+    color:white;
+    border-radius:16px;
+    padding:16px;
+    margin-top:12px;
+    font-weight:bold;
+}
+
+.warning{
+    color:#fbbf24;
+    font-size:12px;
+    line-height:1.5;
+    margin-top:12px;
+}
+
+footer{
+    text-align:center;
+    color:#64748b;
+    font-size:12px;
+    padding:10px 0 20px;
 }
 
 @media(max-width:600px){
-
-    body{
-        padding:8px;
+    .app{
+        padding:12px;
     }
 
-    header h1{
+    h1{
         font-size:25px;
     }
 
-    .card{
-        padding:12px;
-        border-radius:17px;
+    .logo{
+        font-size:42px;
     }
 
-    .buttons button,
-    .file{
-        flex:1 1 100%;
+    .card{
+        border-radius:18px;
+        padding:14px;
     }
 }
 </style>
@@ -263,1093 +311,974 @@ select{
 <div class="app">
 
 <header>
-    <h1>☁️ AI SKY REPLACER</h1>
-    <p>
-        Videodagi osmonni AI yordamida aniqlash
-        va bulut qo‘shish.
-    </p>
+    <div class="logo">☁️</div>
+    <h1>AI SKY CLOUDS</h1>
+    <div class="subtitle">
+        Videodagi osmonni AI aniqlaydi va bulut qo‘shadi
+    </div>
 </header>
 
-
 <div class="card">
 
-    <h2>🤖 AI modeli</h2>
+    <div class="status">
+        <span id="statusDot" class="dot"></span>
+        <span id="statusText">AI modeli yuklanmoqda...</span>
+    </div>
 
-    <div class="ai">
-        <div class="aiDot"></div>
+    <label class="file-btn">
+        📱 Galereyadan VIDEO TANLASH
+        <input
+            id="videoInput"
+            type="file"
+            accept="video/*">
+    </label>
 
-        <div>
-            <b id="modelStatus">
-                AI modeli yuklanmagan
-            </b>
+    <video
+        id="sourceVideo"
+        controls
+        playsinline
+        preload="metadata">
+    </video>
 
-            <div class="info">
-                Sky segmentatsiyasi uchun DeepLab modeli
-            </div>
+    <div class="info">
+        <div class="infoBox">
+            <b id="videoWidth">0</b>
+            <span>Kenglik</span>
+        </div>
+
+        <div class="infoBox">
+            <b id="videoHeight">0</b>
+            <span>Balandlik</span>
+        </div>
+
+        <div class="infoBox">
+            <b id="videoDuration">0s</b>
+            <span>Davomiylik</span>
         </div>
     </div>
 
-    <button
-        id="loadAI"
-        class="green">
-        🤖 AI modelini yuklash
-    </button>
-
 </div>
-
 
 <div class="card">
 
-    <h2>📱 Video</h2>
+    <h2 style="margin-bottom:14px;">☁️ Bulut sozlamalari</h2>
 
-    <div class="buttons">
+    <div class="controls">
 
-        <label class="file">
-            📂 Galereyadan video tanlash
+        <div class="control">
+            <div class="controlTop">
+                <span>Bulut miqdori</span>
+                <span id="cloudAmountValue">60%</span>
+            </div>
 
             <input
-                id="videoInput"
-                type="file"
-                accept="video/*">
-        </label>
-
-    </div>
-
-    <div
-        id="status"
-        class="status">
-        Avval AI modelini yuklang.
-    </div>
-
-</div>
-
-
-<div class="card">
-
-    <h2>🎥 Original video</h2>
-
-    <div class="preview">
-
-        <video
-            id="sourceVideo"
-            controls
-            playsinline>
-        </video>
-
-    </div>
-
-</div>
-
-
-<div class="card">
-
-    <h2>☁️ Bulut sozlamalari</h2>
-
-
-    <div class="control">
-
-        <div class="controlTop">
-
-            <span>☁️ Bulut miqdori</span>
-
-            <span
-                id="cloudValue"
-                class="value">
-                75%
-            </span>
-
+                id="cloudAmount"
+                type="range"
+                min="10"
+                max="100"
+                value="60">
         </div>
 
-        <input
-            id="cloudRange"
-            type="range"
-            min="0"
-            max="100"
-            value="75">
+        <div class="control">
+            <div class="controlTop">
+                <span>Shaffoflik</span>
+                <span id="cloudOpacityValue">70%</span>
+            </div>
 
-    </div>
-
-
-    <div class="control">
-
-        <div class="controlTop">
-
-            <span>🌫️ Shaffoflik</span>
-
-            <span
-                id="opacityValue"
-                class="value">
-                75%
-            </span>
-
+            <input
+                id="cloudOpacity"
+                type="range"
+                min="10"
+                max="100"
+                value="70">
         </div>
 
-        <input
-            id="opacityRange"
-            type="range"
-            min="0"
-            max="100"
-            value="75">
+        <div class="control">
+            <div class="controlTop">
+                <span>Bulut tezligi</span>
+                <span id="cloudSpeedValue">1.0x</span>
+            </div>
 
-    </div>
-
-
-    <div class="control">
-
-        <div class="controlTop">
-
-            <span>💨 Bulut tezligi</span>
-
-            <span
-                id="speedValue"
-                class="value">
-                50
-            </span>
-
+            <input
+                id="cloudSpeed"
+                type="range"
+                min="20"
+                max="200"
+                value="100">
         </div>
 
-        <input
-            id="speedRange"
-            type="range"
-            min="10"
-            max="100"
-            value="50">
+        <div class="control">
+            <div class="controlTop">
+                <span>Bulut turi</span>
+            </div>
 
-    </div>
-
-
-    <div class="control">
-
-        <div class="controlTop">
-
-            <span>🎨 Bulut turi</span>
-
+            <select id="cloudType">
+                <option value="soft">Yumshoq bulut</option>
+                <option value="white">Oq bulut</option>
+                <option value="storm">To‘q bulut</option>
+                <option value="thin">Yengil bulut</option>
+            </select>
         </div>
-
-        <select id="cloudType">
-
-            <option value="white">
-                ☁️ Oq bulut
-            </option>
-
-            <option value="soft">
-                🌤️ Yumshoq bulut
-            </option>
-
-            <option value="storm">
-                🌩️ Bo‘ron buluti
-            </option>
-
-            <option value="sunset">
-                🌅 Quyosh botishi
-            </option>
-
-        </select>
 
     </div>
 
 </div>
 
-
 <div class="card">
 
-    <h2>🚀 Tayyorlash</h2>
+    <button id="processBtn" disabled>
+        🤖 AI BILAN VIDEONI ISHLASH
+    </button>
 
-    <div class="buttons">
+    <button id="stopBtn" disabled>
+        ⛔ TO‘XTATISH
+    </button>
 
-        <button
-            id="processButton"
-            class="green"
-            disabled>
-            ✨ AI bilan bulut qo‘shish
-        </button>
-
-        <button
-            id="stopButton"
-            class="red"
-            disabled>
-            ⏹ To‘xtatish
-        </button>
-
-    </div>
-
-
-    <div
-        id="progressBox"
-        class="progressBox">
+    <div id="progressWrap" class="progressWrap">
 
         <div class="progress">
-
             <div
                 id="progressBar"
                 class="progressBar">
             </div>
-
         </div>
 
-        <span
+        <div
             id="progressText"
             class="progressText">
             0%
-        </span>
+        </div>
 
+    </div>
+
+    <div class="warning">
+        ⚠️ AI video kadrlarini telefonning o‘zida qayta ishlaydi.
+        Eski yoki kuchsiz telefonlarda jarayon sekin bo‘lishi mumkin.
+        Avval qisqa video bilan sinab ko‘ring.
     </div>
 
 </div>
 
+<div id="previewCard" class="card" style="display:none;">
 
-<div class="card">
+    <h2 style="margin-bottom:12px;">🎬 Ishlanayotgan video</h2>
 
-    <h2>🎬 Tayyor video</h2>
+    <canvas id="processCanvas"></canvas>
+
+</div>
+
+<div id="resultCard" class="card">
+
+    <h2 style="margin-bottom:12px;">✅ Tayyor video</h2>
 
     <video
         id="resultVideo"
-        class="result"
         controls
         playsinline>
     </video>
 
     <a
-        id="download"
-        class="download">
-        ⬇️ Tayyor videoni saqlash
+        id="downloadBtn"
+        class="download"
+        download="AI-SKY-CLOUDS.webm">
+        ⬇️ VIDEONI SAQLASH
     </a>
 
 </div>
 
-
-<div class="card">
-
-    <p class="info">
-
-        ℹ️ AI model birinchi marta internetdan yuklanadi.
-        Video telefonning o‘zida brauzer orqali qayta ishlanadi.
-        Uzun va yuqori sifatli videolar telefonda sekinroq
-        ishlashi mumkin.
-
-    </p>
+<footer>
+    AI SKY CLOUDS • Browser AI Video Editor
+</footer>
 
 </div>
-
-
-<canvas id="videoCanvas"></canvas>
-
-<canvas id="maskCanvas"></canvas>
-
-</div>
-
-
-<!-- TENSORFLOW -->
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/deeplab@0.2.2/dist/deeplab.min.js"></script>
-
 
 <script>
+"use strict";
 
-let model = null;
-
-let videoFile = null;
-
-let stopProcessing = false;
-
-let outputURL = null;
-
-
-const sourceVideo =
-    document.getElementById(
-        "sourceVideo"
-    );
+/* =========================================================
+   AI SKY CLOUDS
+   ========================================================= */
 
 const videoInput =
-    document.getElementById(
-        "videoInput"
-    );
+    document.getElementById("videoInput");
 
-const statusBox =
-    document.getElementById(
-        "status"
-    );
-
-const modelStatus =
-    document.getElementById(
-        "modelStatus"
-    );
-
-const processButton =
-    document.getElementById(
-        "processButton"
-    );
-
-const stopButton =
-    document.getElementById(
-        "stopButton"
-    );
-
-const progressBox =
-    document.getElementById(
-        "progressBox"
-    );
-
-const progressBar =
-    document.getElementById(
-        "progressBar"
-    );
-
-const progressText =
-    document.getElementById(
-        "progressText"
-    );
-
-const resultVideo =
-    document.getElementById(
-        "resultVideo"
-    );
-
-const download =
-    document.getElementById(
-        "download"
-    );
+const sourceVideo =
+    document.getElementById("sourceVideo");
 
 const canvas =
-    document.getElementById(
-        "videoCanvas"
-    );
-
-const maskCanvas =
-    document.getElementById(
-        "maskCanvas"
-    );
+    document.getElementById("processCanvas");
 
 const ctx =
-    canvas.getContext(
-        "2d"
-    );
+    canvas.getContext("2d", {
+        willReadFrequently:true
+    });
 
-const maskCtx =
-    maskCanvas.getContext(
-        "2d"
-    );
+const processBtn =
+    document.getElementById("processBtn");
+
+const stopBtn =
+    document.getElementById("stopBtn");
+
+const statusText =
+    document.getElementById("statusText");
+
+const statusDot =
+    document.getElementById("statusDot");
+
+const progressWrap =
+    document.getElementById("progressWrap");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const progressText =
+    document.getElementById("progressText");
+
+const resultCard =
+    document.getElementById("resultCard");
+
+const resultVideo =
+    document.getElementById("resultVideo");
+
+const downloadBtn =
+    document.getElementById("downloadBtn");
+
+const previewCard =
+    document.getElementById("previewCard");
+
+const cloudAmount =
+    document.getElementById("cloudAmount");
+
+const cloudOpacity =
+    document.getElementById("cloudOpacity");
+
+const cloudSpeed =
+    document.getElementById("cloudSpeed");
+
+const cloudType =
+    document.getElementById("cloudType");
+
+let aiModel = null;
+let selectedFile = null;
+let sourceURL = null;
+let resultURL = null;
+let stopped = false;
+
+let cloudSeed = 0;
 
 
-function status(text){
+/* =========================================================
+   SLIDERLAR
+   ========================================================= */
 
-    statusBox.textContent =
-        text;
+cloudAmount.addEventListener("input", () => {
+    document.getElementById("cloudAmountValue").textContent =
+        cloudAmount.value + "%";
+});
 
+cloudOpacity.addEventListener("input", () => {
+    document.getElementById("cloudOpacityValue").textContent =
+        cloudOpacity.value + "%";
+});
+
+cloudSpeed.addEventListener("input", () => {
+    document.getElementById("cloudSpeedValue").textContent =
+        (Number(cloudSpeed.value) / 100).toFixed(1) + "x";
+});
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function setStatus(text, type="normal") {
+
+    statusText.textContent = text;
+
+    statusDot.className = "dot";
+
+    if(type === "ok"){
+        statusDot.classList.add("ok");
+    }
+
+    if(type === "err"){
+        statusDot.classList.add("err");
+    }
 }
 
 
-/* AI MODEL */
+/* =========================================================
+   AI MODEL
+   ========================================================= */
 
-document.getElementById(
-    "loadAI"
-).onclick = async function(){
-
-    const button = this;
-
-    button.disabled = true;
-
-    modelStatus.textContent =
-        "AI modeli yuklanmoqda...";
-
-    status(
-        "🤖 AI modeli internetdan yuklanmoqda..."
-    );
+async function loadAI(){
 
     try{
 
+        setStatus("TensorFlow.js ishga tushmoqda...");
+
         await tf.ready();
 
+        setStatus("AI segmentatsiya modeli yuklanmoqda...");
+
         /*
-         * DeepLab MobileNet
-         *
-         * Bu model semantik segmentatsiya
-         * uchun ishlatiladi.
-         */
+          Pascal model DeepLab semantic segmentation
+          uchun ishlatiladi.
+        */
 
-        model =
-            await deeplab.load(
-                {
-                    base:
-                        "pascal",
-                    quantizationBytes:
-                        2
-                }
-            );
+        aiModel = await deeplab.load({
+            base:"pascal",
+            quantizationBytes:2
+        });
 
-
-        modelStatus.textContent =
-            "AI modeli tayyor ✅";
-
-        status(
-            "✅ AI modeli tayyor. Endi video tanlang."
+        setStatus(
+            "AI model tayyor. Video tanlang.",
+            "ok"
         );
 
-        processButton.disabled =
-            !videoFile;
+        if(selectedFile){
+            processBtn.disabled = false;
+        }
 
-    }
-
-    catch(error){
+    }catch(error){
 
         console.error(error);
 
-        modelStatus.textContent =
-            "AI modelini yuklashda xato";
-
-        status(
-            "❌ AI modeli yuklanmadi. Internetni tekshiring."
+        setStatus(
+            "AI modelini yuklashda xato.",
+            "err"
         );
 
-        button.disabled =
-            false;
-
-    }
-
-};
-
-
-/* VIDEO TANLASH */
-
-videoInput.onchange =
-    function(){
-
-        const file =
-            this.files[0];
-
-        if(!file){
-            return;
-        }
-
-
-        videoFile =
-            file;
-
-
-        if(sourceVideo.src){
-
-            URL.revokeObjectURL(
-                sourceVideo.src
-            );
-
-        }
-
-
-        sourceVideo.src =
-            URL.createObjectURL(
-                file
-            );
-
-
-        sourceVideo.load();
-
-
-        status(
-            "🎥 Video tanlandi: " +
-            file.name
+        alert(
+            "AI modelini yuklab bo‘lmadi.\n\n" +
+            "Internet aloqasini tekshiring."
         );
-
-
-        if(model){
-
-            processButton.disabled =
-                false;
-
-        }
-
-    };
-
-
-/* RANGE */
-
-const cloudRange =
-    document.getElementById(
-        "cloudRange"
-    );
-
-const opacityRange =
-    document.getElementById(
-        "opacityRange"
-    );
-
-const speedRange =
-    document.getElementById(
-        "speedRange"
-    );
-
-
-function updateValues(){
-
-    document.getElementById(
-        "cloudValue"
-    ).textContent =
-        cloudRange.value + "%";
-
-
-    document.getElementById(
-        "opacityValue"
-    ).textContent =
-        opacityRange.value + "%";
-
-
-    document.getElementById(
-        "speedValue"
-    ).textContent =
-        speedRange.value;
-
+    }
 }
 
-
-cloudRange.oninput =
-    updateValues;
-
-opacityRange.oninput =
-    updateValues;
-
-speedRange.oninput =
-    updateValues;
+loadAI();
 
 
-/* BULUT RANGI */
+/* =========================================================
+   VIDEO TANLASH
+   ========================================================= */
 
-function cloudColor(){
+videoInput.addEventListener("change", () => {
 
-    const type =
-        document.getElementById(
-            "cloudType"
-        ).value;
+    const file = videoInput.files[0];
 
-
-    if(type === "storm"){
-
-        return {
-            main:"#8794a5",
-            light:"#aab4c0"
-        };
-
+    if(!file){
+        return;
     }
 
-
-    if(type === "sunset"){
-
-        return {
-            main:"#ffd2ad",
-            light:"#ffe9d6"
-        };
-
+    if(!file.type.startsWith("video/")){
+        alert("Iltimos, video fayl tanlang.");
+        return;
     }
 
+    selectedFile = file;
 
-    if(type === "soft"){
-
-        return {
-            main:"#eef5fc",
-            light:"#ffffff"
-        };
-
+    if(sourceURL){
+        URL.revokeObjectURL(sourceURL);
     }
 
+    sourceURL =
+        URL.createObjectURL(file);
 
-    return {
-        main:"#ffffff",
-        light:"#ffffff"
-    };
+    sourceVideo.src = sourceURL;
 
-}
+    sourceVideo.load();
 
+    resultCard.style.display = "none";
+
+    setStatus(
+        aiModel
+        ? "Video tayyor. AI bilan ishlash mumkin."
+        : "Video tanlandi. AI modeli kutilmoqda."
+    );
+
+    if(aiModel){
+        processBtn.disabled = false;
+    }
+});
+
+
+/* =========================================================
+   VIDEO METADATA
+   ========================================================= */
+
+sourceVideo.addEventListener("loadedmetadata", () => {
+
+    document.getElementById("videoWidth").textContent =
+        sourceVideo.videoWidth;
+
+    document.getElementById("videoHeight").textContent =
+        sourceVideo.videoHeight;
+
+    document.getElementById("videoDuration").textContent =
+        Math.round(sourceVideo.duration) + "s";
+});
+
+
+/* =========================================================
+   SKY MASK
+   ========================================================= */
 
 /*
- * BULUT CHIZISH
- */
+  DeepLab PASCAL VOC label map:
+  15 = sky
+
+  Natijadagi segmentationMap modelning
+  pastroq resolutiondagi label xaritasi bo‘lishi mumkin.
+*/
+
+function createSkyMask(segmentation, sw, sh){
+
+    const maskCanvas =
+        document.createElement("canvas");
+
+    maskCanvas.width = sw;
+    maskCanvas.height = sh;
+
+    const maskCtx =
+        maskCanvas.getContext("2d");
+
+    const imageData =
+        maskCtx.createImageData(sw, sh);
+
+    const data =
+        imageData.data;
+
+    const map =
+        segmentation.segmentationMap;
+
+    const mapW =
+        segmentation.width || sw;
+
+    const mapH =
+        segmentation.height || sh;
+
+    for(let y=0; y<sh; y++){
+
+        const my =
+            Math.min(
+                mapH - 1,
+                Math.floor(y * mapH / sh)
+            );
+
+        for(let x=0; x<sw; x++){
+
+            const mx =
+                Math.min(
+                    mapW - 1,
+                    Math.floor(x * mapW / sw)
+                );
+
+            const label =
+                map[my * mapW + mx];
+
+            const index =
+                (y * sw + x) * 4;
+
+            /*
+              sky label
+            */
+
+            if(label === 15){
+
+                data[index] = 255;
+                data[index + 1] = 255;
+                data[index + 2] = 255;
+                data[index + 3] = 255;
+
+            }else{
+
+                data[index] = 0;
+                data[index + 1] = 0;
+                data[index + 2] = 0;
+                data[index + 3] = 255;
+            }
+        }
+    }
+
+    maskCtx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+    return maskCanvas;
+}
+
+
+/* =========================================================
+   CLOUD DRAW
+   ========================================================= */
 
 function drawCloud(
     context,
     x,
     y,
-    scale,
-    alpha
+    size,
+    opacity,
+    type
 ){
-
-    const colors =
-        cloudColor();
-
 
     context.save();
 
-    context.globalAlpha =
-        alpha;
+    context.globalAlpha = opacity;
 
-    context.fillStyle =
-        colors.main;
+    let color1 = "rgba(255,255,255,0.95)";
+    let color2 = "rgba(220,235,250,0.85)";
 
+    if(type === "storm"){
+        color1 = "rgba(90,105,125,0.95)";
+        color2 = "rgba(35,48,65,0.9)";
+    }
 
-    /*
-     * katta tana
-     */
+    if(type === "thin"){
+        color1 = "rgba(255,255,255,0.55)";
+        color2 = "rgba(220,235,250,0.35)";
+    }
+
+    if(type === "soft"){
+        color1 = "rgba(255,255,255,0.82)";
+        color2 = "rgba(210,230,245,0.65)";
+    }
+
+    const gradient =
+        context.createRadialGradient(
+            x,
+            y,
+            size * .15,
+            x,
+            y,
+            size
+        );
+
+    gradient.addColorStop(0,color1);
+    gradient.addColorStop(1,color2);
+
+    context.fillStyle = gradient;
 
     context.beginPath();
 
-    context.ellipse(
-        x,
+    context.arc(
+        x - size * .38,
         y,
-        120 * scale,
-        42 * scale,
-        0,
+        size * .32,
         0,
         Math.PI * 2
     );
 
-    context.fill();
-
-
-    /*
-     * chap qism
-     */
-
-    context.fillStyle =
-        colors.light;
-
-    context.beginPath();
-
-    context.ellipse(
-        x - 55 * scale,
-        y - 20 * scale,
-        55 * scale,
-        45 * scale,
-        0,
+    context.arc(
+        x,
+        y - size * .15,
+        size * .42,
         0,
         Math.PI * 2
     );
 
-    context.fill();
-
-
-    /*
-     * markaz
-     */
-
-    context.beginPath();
+    context.arc(
+        x + size * .38,
+        y,
+        size * .3,
+        0,
+        Math.PI * 2
+    );
 
     context.ellipse(
         x,
-        y - 35 * scale,
-        65 * scale,
-        55 * scale,
+        y + size * .1,
+        size * .7,
+        size * .28,
         0,
         0,
         Math.PI * 2
     );
 
     context.fill();
-
-
-    /*
-     * o‘ng
-     */
-
-    context.beginPath();
-
-    context.ellipse(
-        x + 60 * scale,
-        y - 18 * scale,
-        58 * scale,
-        48 * scale,
-        0,
-        0,
-        Math.PI * 2
-    );
-
-    context.fill();
-
 
     context.restore();
-
 }
 
 
-/*
- * AI SEGMENTATSIYA
- */
+/* =========================================================
+   BULUT LAYER
+   ========================================================= */
 
-async function getSkyMask(
-    frameCanvas
+function createCloudLayer(
+    width,
+    height,
+    time
 ){
 
-    /*
-     * DeepLab modeliga rasm beriladi.
-     */
+    const layer =
+        document.createElement("canvas");
 
-    const segmentation =
-        await model.segment(
-            frameCanvas
+    layer.width = width;
+    layer.height = height;
+
+    const c =
+        layer.getContext("2d");
+
+    const amount =
+        Number(cloudAmount.value) / 100;
+
+    const opacity =
+        Number(cloudOpacity.value) / 100;
+
+    const speed =
+        Number(cloudSpeed.value) / 100;
+
+    const type =
+        cloudType.value;
+
+    const count =
+        Math.max(
+            2,
+            Math.floor(4 + amount * 8)
         );
 
+    /*
+      Cloud motion
+    */
 
-    return segmentation;
+    const shift =
+        (time * 0.00002 * speed) % 1;
 
+    for(let i=0; i<count; i++){
+
+        const baseX =
+            ((i / count + shift) % 1) * width;
+
+        const y =
+            height *
+            (
+                0.10 +
+                ((i * 37) % 35) / 100
+            );
+
+        const size =
+            Math.max(
+                25,
+                width *
+                (
+                    0.06 +
+                    ((i * 17) % 7) / 100
+                )
+            );
+
+        drawCloud(
+            c,
+            baseX,
+            y,
+            size,
+            opacity,
+            type
+        );
+    }
+
+    return layer;
 }
 
 
-/*
- * SKY NI TEKSHIRISH
- */
+/* =========================================================
+   MASK BILAN BULUTNI QO‘SHISH
+   ========================================================= */
 
-function isSkyPixel(
-    segmentation,
-    x,
-    y,
-    width
+function compositeClouds(
+    originalCanvas,
+    cloudLayer,
+    maskCanvas
 ){
 
+    const output =
+        document.createElement("canvas");
+
+    output.width =
+        originalCanvas.width;
+
+    output.height =
+        originalCanvas.height;
+
+    const o =
+        output.getContext("2d");
+
     /*
-     * DeepLab natijasidagi
-     * label indeksini tekshiramiz.
-     *
-     * PASCAL VOC:
-     * sky label = 15
-     */
+      1. Original video
+    */
 
-    const index =
-        y * width + x;
+    o.drawImage(
+        originalCanvas,
+        0,
+        0
+    );
 
+    /*
+      2. Bulut layer
+    */
 
-    const value =
-        segmentation
-        .segmentationMap[index];
+    const cloudCanvas =
+        document.createElement("canvas");
 
+    cloudCanvas.width =
+        output.width;
 
-    return value === 15;
+    cloudCanvas.height =
+        output.height;
 
+    const cc =
+        cloudCanvas.getContext("2d");
+
+    cc.drawImage(
+        cloudLayer,
+        0,
+        0,
+        output.width,
+        output.height
+    );
+
+    /*
+      3. Sky mask bilan clip
+    */
+
+    cc.globalCompositeOperation =
+        "destination-in";
+
+    cc.drawImage(
+        maskCanvas,
+        0,
+        0,
+        output.width,
+        output.height
+    );
+
+    /*
+      4. Bulutni original ustiga qo‘shish
+    */
+
+    o.drawImage(
+        cloudCanvas,
+        0,
+        0
+    );
+
+    return output;
 }
 
 
-/*
- * VIDEO QAYTA ISHLASH
- */
+/* =========================================================
+   OUTPUT CANVAS
+   ========================================================= */
 
-processButton.onclick =
-    async function(){
+function prepareCanvas(){
 
-        if(!model){
+    const MAX_WIDTH = 640;
 
-            status(
-                "⚠️ Avval AI modelini yuklang."
-            );
+    let width =
+        sourceVideo.videoWidth;
 
-            return;
+    let height =
+        sourceVideo.videoHeight;
 
-        }
+    if(width > MAX_WIDTH){
 
+        const ratio =
+            MAX_WIDTH / width;
 
-        if(!videoFile){
+        width =
+            Math.round(width * ratio);
 
-            status(
-                "⚠️ Avval video tanlang."
-            );
+        height =
+            Math.round(height * ratio);
+    }
 
-            return;
+    canvas.width = width;
+    canvas.height = height;
 
-        }
-
-
-        stopProcessing =
-            false;
-
-
-        processButton.disabled =
-            true;
-
-        stopButton.disabled =
-            false;
-
-        progressBox.style.display =
-            "block";
+    return {
+        width,
+        height
+    };
+}
 
 
-        sourceVideo.currentTime =
-            0;
+/* =========================================================
+   PROCESS VIDEO
+   ========================================================= */
+
+processBtn.addEventListener(
+    "click",
+    processVideo
+);
 
 
-        await new Promise(
-            resolve => {
+async function processVideo(){
 
-                if(
-                    sourceVideo.readyState >= 2
-                ){
+    if(!selectedFile){
 
-                    resolve();
-
-                }
-                else{
-
-                    sourceVideo.onloadeddata =
-                        resolve;
-
-                }
-
-            }
+        alert(
+            "Avval galereyadan video tanlang."
         );
 
+        return;
+    }
 
-        /*
-         * Ishlash o‘lchami.
-         *
-         * Telefonni qiynamaslik uchun
-         * 640px gacha.
-         */
+    if(!aiModel){
 
-        const maxWidth =
-            640;
+        alert(
+            "AI modeli hali tayyor emas."
+        );
 
+        return;
+    }
 
-        const originalWidth =
-            sourceVideo.videoWidth;
+    if(!window.MediaRecorder){
 
+        alert(
+            "Bu brauzer MediaRecorder'ni qo‘llab-quvvatlamaydi."
+        );
 
-        const originalHeight =
-            sourceVideo.videoHeight;
+        return;
+    }
 
+    stopped = false;
 
-        const scale =
-            Math.min(
-                1,
-                maxWidth /
-                originalWidth
-            );
+    processBtn.disabled = true;
+    stopBtn.disabled = false;
 
+    progressWrap.style.display = "block";
+    previewCard.style.display = "block";
+    resultCard.style.display = "none";
 
-        const width =
-            Math.round(
-                originalWidth *
-                scale
-            );
+    setStatus(
+        "AI video kadrlarini tahlil qilmoqda..."
+    );
 
+    const size =
+        prepareCanvas();
 
-        const height =
-            Math.round(
-                originalHeight *
-                scale
-            );
+    const width =
+        size.width;
 
+    const height =
+        size.height;
 
-        canvas.width =
-            width;
+    /*
+      12 FPS — telefon uchun nisbatan yengil.
+    */
 
-        canvas.height =
-            height;
+    const FPS = 12;
 
+    const stream =
+        canvas.captureStream(FPS);
 
-        maskCanvas.width =
-            width;
+    let recorder;
 
-        maskCanvas.height =
-            height;
+    const chunks = [];
 
+    /*
+      Browser formatini tanlash
+    */
 
-        /*
-         * FPS
-         */
+    let mime =
+        "";
 
-        const fps =
-            12;
+    const formats = [
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm"
+    ];
 
+    for(const format of formats){
 
-        const frameTime =
-            1 / fps;
-
-
-        const duration =
-            sourceVideo.duration;
-
-
-        /*
-         * Canvas stream
-         */
-
-        const outputStream =
-            canvas.captureStream(
-                fps
-            );
-
-
-        /*
-         * Audio yo‘qotilmasligi uchun
-         * original video audio track
-         * MediaElement orqali olinadi.
-         */
-
-        let audioStream = null;
-
-
-        try{
-
-            const audioContext =
-                new AudioContext();
-
-
-            const source =
-                audioContext.createMediaElementSource(
-                    sourceVideo
-                );
-
-
-            const destination =
-                audioContext.createMediaStreamDestination();
-
-
-            source.connect(
-                destination
-            );
-
-
-            source.connect(
-                audioContext.destination
-            );
-
-
-            destination.stream
-                .getAudioTracks()
-                .forEach(
-                    track =>
-                        outputStream.addTrack(
-                            track
-                        )
-                );
-
+        if(MediaRecorder.isTypeSupported(format)){
+            mime = format;
+            break;
         }
-        catch(e){
+    }
 
-            console.log(
-                "Audio stream mavjud emas",
-                e
-            );
+    try{
 
-        }
-
-
-        let mime =
-            "video/webm";
-
-
-        if(
-            MediaRecorder.isTypeSupported(
-                "video/webm;codecs=vp9,opus"
-            )
-        ){
-
-            mime =
-                "video/webm;codecs=vp9,opus";
-
-        }
-        else if(
-            MediaRecorder.isTypeSupported(
-                "video/webm;codecs=vp8,opus"
-            )
-        ){
-
-            mime =
-                "video/webm;codecs=vp8,opus";
-
-        }
-
-
-        let recorder;
-
-
-        try{
-
-            recorder =
-                new MediaRecorder(
-                    outputStream,
-                    {
-                        mimeType:mime,
-                        videoBitsPerSecond:
-                            3000000
-                    }
-                );
-
-        }
-        catch(error){
-
-            recorder =
-                new MediaRecorder(
-                    outputStream
-                );
-
-        }
-
-
-        const chunks = [];
-
-
-        recorder.ondataavailable =
-            function(event){
-
-                if(
-                    event.data &&
-                    event.data.size
-                ){
-
-                    chunks.push(
-                        event.data
-                    );
-
+        recorder =
+            new MediaRecorder(
+                stream,
+                mime
+                ? {
+                    mimeType:mime,
+                    videoBitsPerSecond:2500000
                 }
+                : undefined
+            );
 
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Video yozishni boshlashda xato."
+        );
+
+        processBtn.disabled = false;
+        stopBtn.disabled = true;
+
+        return;
+    }
+
+    recorder.ondataavailable = event => {
+
+        if(event.data &&
+           event.data.size > 0){
+
+            chunks.push(event.data);
+        }
+    };
+
+    const recordingFinished =
+        new Promise(resolve => {
+
+            recorder.onstop = () => {
+                resolve();
             };
 
+        });
 
-        recorder.start(
-            500
-        );
+    recorder.start(500);
 
+    sourceVideo.pause();
 
-        /*
-         * FRAME LOOP
-         */
+    sourceVideo.currentTime = 0;
 
-        let currentTime = 0;
+    /*
+      metadata tayyor
+    */
 
+    await waitForVideoReady();
+
+    const duration =
+        sourceVideo.duration;
+
+    const frameStep =
+        1 / FPS;
+
+    let currentTime = 0;
+
+    try{
 
         while(
             currentTime < duration &&
-            !stopProcessing
+            !stopped
         ){
 
             sourceVideo.currentTime =
                 currentTime;
 
-
-            await new Promise(
-                resolve => {
-
-                    const done =
-                        () => {
-
-                            sourceVideo.removeEventListener(
-                                "seeked",
-                                done
-                            );
-
-                            resolve();
-
-                        };
-
-
-                    sourceVideo.addEventListener(
-                        "seeked",
-                        done
-                    );
-
-                }
-            );
-
+            await waitForSeek();
 
             /*
-             * Original frame
-             */
+              Original frame
+            */
 
             ctx.clearRect(
                 0,
@@ -1358,7 +1287,6 @@ processButton.onclick =
                 height
             );
 
-
             ctx.drawImage(
                 sourceVideo,
                 0,
@@ -1367,508 +1295,291 @@ processButton.onclick =
                 height
             );
 
-
             /*
-             * AI segmentatsiya
-             */
+              AI segmentation
+            */
 
-            let segmentation;
-
-
-            try{
-
-                segmentation =
-                    await getSkyMask(
-                        canvas
-                    );
-
-            }
-            catch(error){
-
-                console.error(
-                    error
+            const segmentation =
+                await aiModel.segment(
+                    canvas
                 );
 
-                /*
-                 * Model xato bersa,
-                 * original frame qoladi.
-                 */
-
-                currentTime +=
-                    frameTime;
-
-                continue;
-
-            }
-
-
             /*
-             * AI mask.
-             *
-             * Sky hududiga bulut chizamiz.
-             */
+              Sky mask
+            */
 
-            const cloudAmount =
-                Number(
-                    cloudRange.value
-                ) / 100;
-
-
-            const cloudOpacity =
-                Number(
-                    opacityRange.value
-                ) / 100;
-
-
-            /*
-             * Faqat sky bor joylarni
-             * mask sifatida ishlatamiz.
-             */
-
-            maskCtx.clearRect(
-                0,
-                0,
-                width,
-                height
-            );
-
-
-            const imageData =
-                maskCtx.createImageData(
+            const mask =
+                createSkyMask(
+                    segmentation,
                     width,
                     height
                 );
 
-
-            const data =
-                imageData.data;
-
-
             /*
-             * Har bir pikselni tekshirish
-             *
-             * Telefonni juda qiynamaslik uchun
-             * 2x2 piksel qadam.
-             */
+              Clouds
+            */
 
-            const step = 2;
-
-
-            for(
-                let y = 0;
-                y < height;
-                y += step
-            ){
-
-                for(
-                    let x = 0;
-                    x < width;
-                    x += step
-                ){
-
-                    if(
-                        isSkyPixel(
-                            segmentation,
-                            x,
-                            y,
-                            width
-                        )
-                    ){
-
-                        for(
-                            let yy = 0;
-                            yy < step &&
-                            y + yy < height;
-                            yy++
-                        ){
-
-                            for(
-                                let xx = 0;
-                                xx < step &&
-                                x + xx < width;
-                                xx++
-                            ){
-
-                                const p =
-                                    (
-                                        (y + yy) *
-                                        width +
-                                        (x + xx)
-                                    ) * 4;
-
-
-                                data[p] =
-                                    255;
-
-                                data[p+1] =
-                                    255;
-
-                                data[p+2] =
-                                    255;
-
-                                data[p+3] =
-                                    255;
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-
-            maskCtx.putImageData(
-                imageData,
-                0,
-                0
-            );
-
-
-            /*
-             * Maskni clipping sifatida ishlatish.
-             */
-
-            ctx.save();
-
-
-            ctx.globalCompositeOperation =
-                "destination-in";
-
-
-            ctx.drawImage(
-                maskCanvas,
-                0,
-                0
-            );
-
-
-            /*
-             * Endi sky alpha layer
-             */
-
-            const skyLayer =
-                document.createElement(
-                    "canvas"
+            const clouds =
+                createCloudLayer(
+                    width,
+                    height,
+                    currentTime * 1000
                 );
 
+            /*
+              Final frame
+            */
 
-            skyLayer.width =
-                width;
-
-            skyLayer.height =
-                height;
-
-
-            const skyCtx =
-                skyLayer.getContext(
-                    "2d"
+            const finalCanvas =
+                compositeClouds(
+                    canvas,
+                    clouds,
+                    mask
                 );
 
-
-            /*
-             * Osmonning asl qismi.
-             */
-
-            skyCtx.drawImage(
-                sourceVideo,
+            ctx.clearRect(
                 0,
                 0,
                 width,
                 height
             );
 
-
-            skyCtx.globalCompositeOperation =
-                "destination-in";
-
-
-            skyCtx.drawImage(
-                maskCanvas,
-                0,
-                0
-            );
-
-
-            ctx.restore();
-
-
-            /*
-             * Original framega
-             * sky maskni qo‘shish.
-             */
-
-            ctx.globalAlpha =
-                0.001;
-
-
             ctx.drawImage(
-                skyLayer,
+                finalCanvas,
                 0,
                 0
             );
 
-
-            ctx.globalAlpha =
-                1;
-
-
             /*
-             * BULUTLAR
-             */
-
-            if(
-                cloudAmount > 0
-            ){
-
-                const elapsed =
-                    currentTime;
-
-
-                const speed =
-                    Number(
-                        speedRange.value
-                    );
-
-
-                const movement =
-                    (
-                        elapsed *
-                        speed *
-                        3
-                    ) %
-                    (width + 500);
-
-
-                /*
-                 * Clip faqat sky maskga.
-                 */
-
-                ctx.save();
-
-
-                ctx.globalCompositeOperation =
-                    "source-over";
-
-
-                ctx.globalAlpha =
-                    cloudOpacity *
-                    cloudAmount;
-
-
-                /*
-                 * Sky mask bilan clipping.
-                 */
-
-                ctx.globalCompositeOperation =
-                    "source-atop";
-
-
-                drawCloud(
-                    ctx,
-                    movement - 180,
-                    height * .20,
-                    0.9,
-                    1
-                );
-
-
-                drawCloud(
-                    ctx,
-                    movement - 500,
-                    height * .32,
-                    0.65,
-                    .65
-                );
-
-
-                drawCloud(
-                    ctx,
-                    movement + 200,
-                    height * .14,
-                    .7,
-                    .55
-                );
-
-
-                drawCloud(
-                    ctx,
-                    movement - 800,
-                    height * .43,
-                    .8,
-                    .45
-                );
-
-
-                ctx.restore();
-
-            }
-
-
-            /*
-             * Progress
-             */
+              Progress
+            */
 
             const percent =
                 Math.min(
                     100,
                     Math.round(
-                        (
-                            currentTime /
-                            duration
-                        ) * 100
+                        currentTime /
+                        duration *
+                        100
                     )
                 );
-
 
             progressBar.style.width =
                 percent + "%";
 
-
             progressText.textContent =
+                "AI ishlamoqda: " +
                 percent +
-                "% — AI kadr tahlil qilmoqda";
+                "%";
 
+            currentTime += frameStep;
 
-            status(
-                "🤖 AI osmonni aniqlayapti: " +
-                percent +
-                "%"
+            /*
+              UI ga nafas berish
+            */
+
+            await new Promise(
+                resolve =>
+                    setTimeout(resolve,0)
             );
-
-
-            currentTime +=
-                frameTime;
-
         }
 
+    }catch(error){
 
-        /*
-         * RECORD TO‘XTATISH
-         */
+        console.error(error);
 
-        await new Promise(
-            resolve => {
+        stopped = true;
 
-                recorder.onstop =
-                    resolve;
+        alert(
+            "Videoni qayta ishlashda xato:\n\n" +
+            error.message
+        );
+    }
 
-                recorder.stop();
+    if(recorder.state !== "inactive"){
+        recorder.stop();
+    }
 
+    await recordingFinished;
+
+    if(stopped){
+
+        setStatus(
+            "Jarayon to‘xtatildi."
+        );
+
+        progressText.textContent =
+            "To‘xtatildi";
+
+        processBtn.disabled = false;
+        stopBtn.disabled = true;
+
+        return;
+    }
+
+    const blob =
+        new Blob(
+            chunks,
+            {
+                type:
+                    mime ||
+                    "video/webm"
             }
         );
 
+    if(resultURL){
+        URL.revokeObjectURL(resultURL);
+    }
 
-        if(
-            stopProcessing
-        ){
+    resultURL =
+        URL.createObjectURL(blob);
 
-            processButton.disabled =
-                false;
+    resultVideo.src =
+        resultURL;
 
-            stopButton.disabled =
-                true;
+    downloadBtn.href =
+        resultURL;
 
-            status(
-                "⏹ Ishlash to‘xtatildi."
+    resultCard.style.display =
+        "block";
+
+    progressBar.style.width =
+        "100%";
+
+    progressText.textContent =
+        "100% — tayyor!";
+
+    setStatus(
+        "Video tayyor. Saqlashingiz mumkin.",
+        "ok"
+    );
+
+    processBtn.disabled = false;
+    stopBtn.disabled = true;
+
+    /*
+      Video boshiga qaytarish
+    */
+
+    sourceVideo.pause();
+    sourceVideo.currentTime = 0;
+
+    window.scrollTo({
+        top:
+            resultCard.offsetTop - 10,
+        behavior:"smooth"
+    });
+}
+
+
+/* =========================================================
+   STOP
+   ========================================================= */
+
+stopBtn.addEventListener(
+    "click",
+    () => {
+
+        stopped = true;
+
+        stopBtn.disabled = true;
+
+        setStatus(
+            "To‘xtatilmoqda..."
+        );
+    }
+);
+
+
+/* =========================================================
+   VIDEO SEEK WAIT
+   ========================================================= */
+
+function waitForSeek(){
+
+    return new Promise(resolve => {
+
+        const done = () => {
+
+            sourceVideo.removeEventListener(
+                "seeked",
+                done
             );
 
-            return;
+            resolve();
+        };
 
+        sourceVideo.addEventListener(
+            "seeked",
+            done,
+            {
+                once:true
+            }
+        );
+    });
+}
+
+
+/* =========================================================
+   VIDEO READY WAIT
+   ========================================================= */
+
+function waitForVideoReady(){
+
+    if(
+        sourceVideo.readyState >= 2 &&
+        Number.isFinite(sourceVideo.duration)
+    ){
+
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+
+        const check = () => {
+
+            if(
+                sourceVideo.readyState >= 2 &&
+                Number.isFinite(
+                    sourceVideo.duration
+                )
+            ){
+
+                sourceVideo.removeEventListener(
+                    "loadeddata",
+                    check
+                );
+
+                resolve();
+            }
+        };
+
+        sourceVideo.addEventListener(
+            "loadeddata",
+            check
+        );
+    });
+}
+
+
+/* =========================================================
+   SAHIFA YOPILISHIDA URL TOZALASH
+   ========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if(sourceURL){
+            URL.revokeObjectURL(sourceURL);
         }
 
-
-        const blob =
-            new Blob(
-                chunks,
-                {
-                    type:mime
-                }
-            );
-
-
-        if(outputURL){
-
-            URL.revokeObjectURL(
-                outputURL
-            );
-
+        if(resultURL){
+            URL.revokeObjectURL(resultURL);
         }
-
-
-        outputURL =
-            URL.createObjectURL(
-                blob
-            );
-
-
-        resultVideo.src =
-            outputURL;
-
-
-        resultVideo.style.display =
-            "block";
-
-
-        download.href =
-            outputURL;
-
-
-        download.download =
-            "AI-SKY-VIDEO.webm";
-
-
-        download.style.display =
-            "block";
-
-
-        progressBar.style.width =
-            "100%";
-
-
-        progressText.textContent =
-            "100% — Tayyor";
-
-
-        status(
-            "✅ Tayyor! Endi videoni saqlashingiz mumkin."
-        );
-
-
-        processButton.disabled =
-            false;
-
-        stopButton.disabled =
-            true;
-
-    };
-
-
-/* TO‘XTATISH */
-
-stopButton.onclick =
-    function(){
-
-        stopProcessing =
-            true;
-
-        status(
-            "⏳ To‘xtatilmoqda..."
-        );
-
-        stopButton.disabled =
-            true;
-
-    };
-
-
-updateValues();
-
+    }
+);
 </script>
 
 </body>
 </html>
-```
-    
